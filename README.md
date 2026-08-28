@@ -71,8 +71,8 @@ Você também precisa de uma **API Key gratuita** do TheMovieDB:
 1. Clone o repositório:
 
 ```bash
-git clone https://github.com/seu-usuario/catalogo-de-filmes.git
-cd catalogo-de-filmes
+git clone https://github.com/enzorusso/btg-themovie-angular.git
+cd btg-themovie-angular
 ```
 
 2. Instale as dependências:
