@@ -39,3 +39,26 @@ body {
   height: 100%;
 }
 /* You can add global styles to this file, and also import other style files */
+
+.scrollbar-hide {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge antigo */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* Chrome, Safari */
+}
+
+img,
+a {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.mat-mdc-icon-button {
+  --mat-icon-button-hover-state-layer-opacity: 0;
+  --mat-icon-button-focus-state-layer-opacity: 0;
+  --mat-icon-button-pressed-state-layer-opacity: 0;
+}

@@ -1,0 +1,39 @@
+@if (movies.length > 0) {
+  @if (movies[currentIndex()]; as current) {
+    <div class="relative w-full overflow-hidden rounded-xl">
+      <a [routerLink]="['/movie', current.id]" class="block">
+        @if (current.backdrop_path | tmdbImage: 'w1280'; as backdropUrl) {
+          <img
+            [src]="backdropUrl"
+            [alt]="current.title"
+            class="h-64 w-full object-cover object-top md:h-96"
+          />
+        } @else {
+          <div class="flex h-64 w-full items-center justify-center bg-gray-200 md:h-96">
+            <mat-icon>movie</mat-icon>
+          </div>
+        }
+
+        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+          <p class="text-lg font-semibold text-white">
+            {{ current.title }}
+          </p>
+        </div>
+      </a>
+
+      <div class="absolute inset-x-0 bottom-2 flex justify-center gap-2">
+        @for (movie of movies; track movie.id; let i = $index) {
+          <button
+            type="button"
+            class="h-2 w-2 cursor-pointer rounded-full transition-colors"
+            [class.bg-white]="i === currentIndex()"
+            [class.bg-white/40]="i !== currentIndex()"
+            [attr.aria-label]="'Ir para o slide ' + (i + 1)"
+            [attr.aria-current]="i === currentIndex() ? 'true' : null"
+            (click)="goTo(i)"
+          ></button>
+        }
+      </div>
+    </div>
+  }
+}

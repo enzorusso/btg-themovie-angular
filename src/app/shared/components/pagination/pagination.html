@@ -1,0 +1,25 @@
+@if (totalPages > 1) {
+  <div class="flex items-center justify-center gap-4 py-4">
+    <button
+      mat-icon-button
+      disableRipple
+      [disabled]="page <= 1"
+      (click)="onPrevious()"
+      aria-label="Página anterior"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+
+    <span class="text-sm text-gray-600">Página {{ page }} de {{ totalPages }}</span>
+
+    <button
+      mat-icon-button
+      disableRipple
+      [disabled]="page >= totalPages"
+      (click)="onNext()"
+      aria-label="Próxima página"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+}

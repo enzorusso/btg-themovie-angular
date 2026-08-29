@@ -1,0 +1,29 @@
+<div class="flex items-start gap-2">
+  <button
+    mat-icon-button
+    disableRipple
+    class="mt-0 !h-60 !w-10 !shrink-0 !rounded-lg bg-white/30 text-gray-600 shadow-sm backdrop-blur-[2px] transition"
+    (click)="scrollLeft()"
+    aria-label="Filmes anteriores"
+  >
+    <mat-icon class="!text-3xl">chevron_left</mat-icon>
+  </button>
+
+  <div #carousel class="flex min-w-0 gap-4 overflow-x-auto scroll-smooth scrollbar-hide">
+    @for (movie of movies; track movie.id) {
+      <div class="w-40 flex-shrink-0">
+        <app-movie-card [movie]="movie" />
+      </div>
+    }
+  </div>
+
+  <button
+    mat-icon-button
+    disableRipple
+    class="mt-0 !h-60 !w-10 !shrink-0 !rounded-lg bg-white/30 text-gray-600 shadow-sm backdrop-blur-[2px] transition"
+    (click)="scrollRight()"
+    aria-label="Próximos filmes"
+  >
+    <mat-icon class="!text-3xl">chevron_right</mat-icon>
+  </button>
+</div>

@@ -1,0 +1,26 @@
+<a
+  class="flex w-full flex-col gap-2 text-inherit no-underline"
+  [routerLink]="['/movie', movie.id]"
+>
+  <div class="aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200">
+    @if (movie.poster_path | tmdbImage: 'w342'; as posterUrl) {
+      <img
+        [src]="posterUrl"
+        [alt]="movie.title"
+        loading="lazy"
+        class="h-full w-full object-cover"
+      />
+    } @else {
+      <div class="flex h-full w-full items-center justify-center">
+        <mat-icon>movie</mat-icon>
+      </div>
+    }
+  </div>
+  <p class="truncate text-sm font-medium">{{ movie.title }}</p>
+  <div class="flex items-center gap-1">
+    <mat-icon class="!h-4 !w-4 !text-base !leading-4 text-amber-500">star</mat-icon>
+    <span class="text-xs text-gray-600">
+      {{ movie.vote_average | number: '1.1-1' }}
+    </span>
+  </div>
+</a>

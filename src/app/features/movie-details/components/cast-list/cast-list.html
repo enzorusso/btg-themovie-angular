@@ -1,0 +1,30 @@
+@if (cast.length > 0) {
+  <section>
+    <h2 class="mb-4 text-xl font-semibold">Elenco</h2>
+
+    <div class="grid grid-cols-3 gap-x-4 gap-y-5 sm:grid-cols-4 md:grid-cols-5">
+      @for (member of cast; track member.id) {
+        <div class="flex min-w-0 flex-col items-center gap-1.5 text-center">
+          @if (member.profile_path | tmdbImage: 'w185'; as photoUrl) {
+            <img
+              [src]="photoUrl"
+              [alt]="member.name"
+              loading="lazy"
+              class="h-16 w-16 rounded-full object-cover"
+            />
+          } @else {
+            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200">
+              <span class="text-base font-bold">
+                {{ getInitials(member.name) }}
+              </span>
+            </div>
+          }
+
+          <p class="w-full text-[11px] leading-tight">
+            {{ member.name }}
+          </p>
+        </div>
+      }
+    </div>
+  </section>
+}
