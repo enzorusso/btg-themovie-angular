@@ -1,4 +1,12 @@
-<main class="mx-auto max-w-5xl p-4 h-full">
-  <app-search-bar class="mb-4" [initialQuery]="searchQuery()" />
+<main class="mx-auto max-w-5xl p-4">
+  <div class="mb-4 grid grid-cols-1 items-center gap-3 md:grid-cols-[auto_1fr]">
+    <div class="flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-gray-700">movie</mat-icon>
+      <span class="text-xl font-light tracking-tight text-gray-800"> Catálogo </span>
+    </div>
+
+    <app-search-bar [initialQuery]="searchQuery()" />
+  </div>
+
   <router-outlet />
 </main>
