@@ -136,7 +136,7 @@ src/
 │   │   ├── home/
 │   │   │   ├── components/
 │   │   │   │   ├── banner-carousel/          # banner de lançamentos, com autoplay
-│   │   │   │   └── popular-movies-carousel/  # fileira de populares com scroll horizontal
+│   │   │   │   └── popular-movies-carousel/  # fileira de populares, scroll horizontal infinito (loop)
 │   │   │   ├── pages/home/
 │   │   │   ├── home-module.ts
 │   │   │   └── home-routing-module.ts
@@ -199,13 +199,15 @@ Documentação completa: [TMDB API Reference](https://developer.themoviedb.org/r
 
 - **Busca combinada (título + ator + diretor) num campo só.** A TMDB não tem um endpoint que combine busca textual com filtro por pessoa. `Tmdb.search()` dispara duas chamadas em paralelo — `/search/movie` para título, e `/search/person` → `/discover/movie?with_people=` para ator/diretor (a mesma pessoa pode aparecer como elenco ou equipe técnica, então um único `with_people` cobre os dois) — e mescla os resultados removendo duplicatas por id. Trocamos uma UI "mais correta" (com modos de busca separados: título/ator/diretor/categoria) por uma experiência mais simples de usar — um campo só, resultado aproximado, sem problema.
 
-- **Estado da busca na URL, não só em memória.** Filtro (`title`) e página atual (`page`) ficam em query params (`/search?title=...&page=...`), não em signals soltos no componente. Isso faz a busca sobreviver a refresh, ser compartilhável por link e funcionar com o botão voltar do navegador, sem precisar de nenhuma lib de state management.
+- **Estado da busca na URL, não só em memória.** Filtro (`title`) e página atual (`page`) ficam em query params (`/search?title=...&page=...`), não em signals soltos no componente. Isso faz a busca sobreviver a refresh, ser compartilhável por link e funcionar com o botão voltar do navegador, sem precisar de nenhuma lib de state management. A barra de busca fixa no topo (`app.html`) segue a mesma fonte de verdade: o componente raiz (`App`) lê o `title` da rota atual e alimenta o campo — por isso ele mostra o termo buscado mesmo depois de um refresh, e volta vazio ao navegar pra home (onde não há `title` na URL).
 
 - **Toda chamada à TMDB passa por um serviço único.** Nenhum componente monta URL ou `HttpParams` na mão — tudo passa por `Tmdb`, e a `api_key` é injetada automaticamente via `HttpInterceptor` em qualquer request para o domínio da TMDB. Componentes só conhecem métodos semânticos (`getPopularMovies()`, `search()` etc.), nunca a forma da API.
 
 - **Loading com skeleton "estático", não spinner.** Home, detalhes e busca seguem o mesmo padrão: um `<app-skeleton>` reutilizável ocupa exatamente o espaço do conteúdo final enquanto os dados carregam (via `forkJoin`, então tudo aparece de uma vez), em vez de um spinner pequeno que dá lugar a um layout bem maior de repente. Evita o "pulo" de tela ao terminar de carregar.
 
 - **Estratégia de componentização.** Três camadas: `core` (serviços singleton, interceptors, models — zero UI), `shared` (componentes/pipes de UI reaproveitados por mais de uma feature: `movie-card`, `search-bar`, `skeleton`, `pagination`) e `features/*` (uma pasta por tela, com `pages/` para o componente de rota e `components/` para sub-componentes usados só ali — como `banner-carousel` e `popular-movies-carousel` dentro de `home`, ou `cast-list` dentro de `movie-details`). Regra prática usada: se um componente serve mais de uma feature, vai para `shared`; se é específico de uma tela, fica dentro dela.
+
+- **Carrossel de populares com loop infinito, sem paginar a API de novo.** A fileira de "Populares" mostra sempre a mesma primeira página de `getPopularMovies()` (não busca mais páginas ao rolar) — o efeito de infinito é só visual: a lista é renderizada triplicada (cópia antes + original + depois) e, ao chegar perto do início/fim de uma cópia, a posição de scroll pula instantaneamente pro trecho equivalente da cópia do meio, sem o usuário perceber. Detalhe não óbvio: a classe `scroll-smooth` (`scroll-behavior: smooth`) faz esse navegador animar até atribuições diretas de `scrollLeft`, não só `scrollTo()`/`scrollBy()` — então esse salto de reposicionamento precisa desligar `scroll-behavior` (`style.scrollBehavior = 'auto'`) por um instante, ou ele fica visivelmente arrastando por vários segundos em vez de ser imperceptível.
 
 - **Módulos por feature com lazy loading, componente raiz standalone.** O scaffold original do projeto usa `NgModule` por feature (mantido, com `loadChildren` lazy), mas o componente raiz (`App`) é standalone — escolha pragmática de manter o padrão herdado do `ng new` em vez de migrar tudo para standalone no meio do desenvolvimento.
 
