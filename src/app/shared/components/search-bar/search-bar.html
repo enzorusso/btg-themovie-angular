@@ -1,4 +1,7 @@
-<form class="flex w-full flex-nowrap items-end gap-2" (submit)="onSubmit($event, searchInput.value)">
+<form
+  class="flex w-full flex-nowrap items-end gap-2"
+  (submit)="onSubmit($event, searchInput.value)"
+>
   <mat-form-field appearance="outline" subscriptSizing="dynamic" class="min-w-0 flex-1">
     <mat-icon matPrefix>search</mat-icon>
     <input
@@ -11,5 +14,5 @@
     />
   </mat-form-field>
 
-  <button mat-flat-button type="submit" class="flex-shrink-0">Buscar</button>
+  <button matFab extended type="submit" class="flex-shrink-0">Buscar</button>
 </form>
