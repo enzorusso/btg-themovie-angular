@@ -1,3 +1,5 @@
+import { Signal } from '@angular/core';
+
 export interface Genre {
   id: number;
   name: string;
@@ -25,4 +27,9 @@ export interface PaginatedResponse<T> {
   results: T[];
   total_pages: number;
   total_results: number;
+}
+
+export interface MovieSection {
+  title: string;
+  movies: Signal<Movie[]>;
 }

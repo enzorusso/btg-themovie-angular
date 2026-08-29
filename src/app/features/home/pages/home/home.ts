@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
-import { Movie } from '../../../../core/models/movie';
+import { Movie, MovieSection } from '../../../../core/models/movie';
 import { Tmdb } from '../../../../core/services/tmdb';
 
 @Component({
@@ -19,6 +19,17 @@ export class Home implements OnInit {
   readonly upcomingMovies = signal<Movie[]>([]);
   readonly nowPlayingMovies = signal<Movie[]>([]);
   readonly topRatedMovies = signal<Movie[]>([]);
+
+  readonly sections: MovieSection[] = [
+    {
+      title: 'Populares',
+      movies: this.popularMovies,
+    },
+    {
+      title: 'Melhores Avaliados',
+      movies: this.topRatedMovies,
+    },
+  ];
 
   // TODO: Create with some genres
 

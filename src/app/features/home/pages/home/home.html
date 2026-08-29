@@ -28,13 +28,13 @@
     <app-banner-carousel [movies]="upcomingMovies()" />
   </section>
 
-  <section class="mb-8">
-    <h2 class="mb-4 text-xl font-semibold">Populares</h2>
-    <app-movies-carousel [movies]="popularMovies()" />
-  </section>
+  @for (section of sections; track section.title) {
+    <section class="mb-8">
+      <h2 class="mb-4 text-xl font-semibold">
+        {{ section.title }}
+      </h2>
 
-  <section>
-    <h2 class="mb-4 text-xl font-semibold">Melhores Avaliados</h2>
-    <app-movies-carousel [movies]="topRatedMovies()" />
-  </section>
+      <app-movies-carousel [movies]="section.movies()" />
+    </section>
+  }
 }
