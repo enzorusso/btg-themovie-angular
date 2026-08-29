@@ -13,13 +13,13 @@ import { Movie } from '../../../../core/models/movie';
 const ITEM_WIDTH = 160;
 const ITEM_GAP = 16;
 @Component({
-  selector: 'app-popular-movies-carousel',
+  selector: 'app-movies-carousel',
   standalone: false,
-  templateUrl: './popular-movies-carousel.html',
-  styleUrl: './popular-movies-carousel.scss',
+  templateUrl: './movies-carousel.html',
+  styleUrl: './movies-carousel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PopularMoviesCarousel implements OnChanges, AfterViewInit {
+export class MoviesCarousel implements OnChanges, AfterViewInit {
   @Input() movies: Movie[] = [];
 
   @ViewChild('carousel')

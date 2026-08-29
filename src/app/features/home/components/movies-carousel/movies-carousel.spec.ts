@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Movie } from '../../../../core/models/movie';
 import { HomeModule } from '../../home-module';
-import { PopularMoviesCarousel } from './popular-movies-carousel';
+import { MoviesCarousel } from './movies-carousel';
 
 function makeMovie(id: number, title: string): Movie {
   return {
@@ -23,9 +23,9 @@ function copyWidthFor(movieCount: number): number {
   return movieCount * 160 + Math.max(movieCount - 1, 0) * 16;
 }
 
-describe('PopularMoviesCarousel', () => {
-  let fixture: ComponentFixture<PopularMoviesCarousel>;
-  let component: PopularMoviesCarousel;
+describe('MoviesCarousel', () => {
+  let fixture: ComponentFixture<MoviesCarousel>;
+  let component: MoviesCarousel;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -33,7 +33,7 @@ describe('PopularMoviesCarousel', () => {
       providers: [provideRouter([])],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(PopularMoviesCarousel);
+    fixture = TestBed.createComponent(MoviesCarousel);
     component = fixture.componentInstance;
   });
 

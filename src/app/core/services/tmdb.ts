@@ -10,9 +10,17 @@ interface DiscoverFilters {
   withPeople?: number;
 }
 
-const EMPTY_PAGE: PaginatedResponse<Movie> = { page: 1, results: [], total_pages: 0, total_results: 0 };
+const EMPTY_PAGE: PaginatedResponse<Movie> = {
+  page: 1,
+  results: [],
+  total_pages: 0,
+  total_results: 0,
+};
 
-function mergeUnique(a: PaginatedResponse<Movie>, b: PaginatedResponse<Movie>): PaginatedResponse<Movie> {
+function mergeUnique(
+  a: PaginatedResponse<Movie>,
+  b: PaginatedResponse<Movie>,
+): PaginatedResponse<Movie> {
   const seen = new Set<number>();
   const results: Movie[] = [];
 
@@ -44,6 +52,12 @@ export class Tmdb {
 
   getUpcomingMovies(page = 1): Observable<PaginatedResponse<Movie>> {
     return this.http.get<PaginatedResponse<Movie>>(`${this.baseUrl}/movie/upcoming`, {
+      params: new HttpParams().set('page', page).set('language', 'pt-BR'),
+    });
+  }
+
+  getTopRatedMovies(page = 1): Observable<PaginatedResponse<Movie>> {
+    return this.http.get<PaginatedResponse<Movie>>(`${this.baseUrl}/movie/top_rated`, {
       params: new HttpParams().set('page', page).set('language', 'pt-BR'),
     });
   }
@@ -82,10 +96,6 @@ export class Tmdb {
     return this.http.get<PaginatedResponse<Movie>>(`${this.baseUrl}/discover/movie`, { params });
   }
 
-  /**
-   * Combines a title match with a person match (cast or crew) for the same
-   * query, since TMDB has no single endpoint covering both.
-   */
   search(query: string, page = 1): Observable<PaginatedResponse<Movie>> {
     const trimmed = query.trim();
     if (!trimmed) {

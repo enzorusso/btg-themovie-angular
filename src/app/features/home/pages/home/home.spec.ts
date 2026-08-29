@@ -27,6 +27,7 @@ describe('Home', () => {
   };
 
   const upcomingMovie: Movie = { ...popularMovie, id: 2, title: 'Upcoming Movie' };
+  const topRatedMovie: Movie = { ...popularMovie, id: 3, title: 'Top Rated Movie' };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -39,30 +40,37 @@ describe('Home', () => {
     tmdb = TestBed.inject(Tmdb);
   });
 
-  it('loads popular and upcoming movies on init', () => {
+  it('loads popular, upcoming and top rated movies on init', () => {
     vi.spyOn(tmdb, 'getPopularMovies').mockReturnValue(of(paginated([popularMovie])));
     vi.spyOn(tmdb, 'getUpcomingMovies').mockReturnValue(of(paginated([upcomingMovie])));
+    vi.spyOn(tmdb, 'getTopRatedMovies').mockReturnValue(of(paginated([topRatedMovie])));
 
     fixture.detectChanges();
 
     expect(component.loading()).toBe(false);
     expect(component.popularMovies()).toEqual([popularMovie]);
     expect(component.upcomingMovies()).toEqual([upcomingMovie]);
+    expect(component.topRatedMovies()).toEqual([topRatedMovie]);
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-banner-carousel')).not.toBeNull();
-    // the popular carousel loops, rendering the list three times back-to-back
+    expect(compiled.querySelectorAll('app-movies-carousel').length).toBe(2);
+    // each carousel loops, rendering its list three times back-to-back
     expect(compiled.querySelectorAll('app-movie-card').length).toBe(
-      component.popularMovies().length * 3,
+      (component.popularMovies().length + component.topRatedMovies().length) * 3,
     );
+    expect(compiled.textContent).toContain('Populares');
+    expect(compiled.textContent).toContain('Melhores Avaliados');
     expect(compiled.querySelector('[data-testid="home-skeleton"]')).toBeNull();
   });
 
   it('shows a skeleton matching the final layout while the requests are in flight', () => {
     const popularSubject = new Subject<PaginatedResponse<Movie>>();
     const upcomingSubject = new Subject<PaginatedResponse<Movie>>();
+    const topRatedSubject = new Subject<PaginatedResponse<Movie>>();
     vi.spyOn(tmdb, 'getPopularMovies').mockReturnValue(popularSubject.asObservable());
     vi.spyOn(tmdb, 'getUpcomingMovies').mockReturnValue(upcomingSubject.asObservable());
+    vi.spyOn(tmdb, 'getTopRatedMovies').mockReturnValue(topRatedSubject.asObservable());
 
     fixture.detectChanges();
 
@@ -75,6 +83,8 @@ describe('Home', () => {
     popularSubject.complete();
     upcomingSubject.next(paginated([upcomingMovie]));
     upcomingSubject.complete();
+    topRatedSubject.next(paginated([topRatedMovie]));
+    topRatedSubject.complete();
     fixture.detectChanges();
 
     expect(compiled.querySelector('[data-testid="home-skeleton"]')).toBeNull();
@@ -85,6 +95,7 @@ describe('Home', () => {
     vi.spyOn(tmdb, 'getUpcomingMovies').mockReturnValue(
       throwError(() => new Error('network error')),
     );
+    vi.spyOn(tmdb, 'getTopRatedMovies').mockReturnValue(of(paginated([])));
 
     fixture.detectChanges();
 

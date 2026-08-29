@@ -28,8 +28,13 @@
     <app-banner-carousel [movies]="upcomingMovies()" />
   </section>
 
-  <section>
+  <section class="mb-8">
     <h2 class="mb-4 text-xl font-semibold">Populares</h2>
-    <app-popular-movies-carousel [movies]="popularMovies()" />
+    <app-movies-carousel [movies]="popularMovies()" />
+  </section>
+
+  <section>
+    <h2 class="mb-4 text-xl font-semibold">Melhores Avaliados</h2>
+    <app-movies-carousel [movies]="topRatedMovies()" />
   </section>
 }
