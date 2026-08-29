@@ -51,8 +51,9 @@ describe('Home', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-banner-carousel')).not.toBeNull();
+    // the popular carousel loops, rendering the list three times back-to-back
     expect(compiled.querySelectorAll('app-movie-card').length).toBe(
-      component.popularMovies().length,
+      component.popularMovies().length * 3,
     );
     expect(compiled.querySelector('[data-testid="home-skeleton"]')).toBeNull();
   });
