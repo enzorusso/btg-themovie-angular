@@ -1,8 +1,13 @@
+import { ViewportScroller } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, of, switchMap } from 'rxjs';
+import { ActivatedRoute, Router, Scroll } from '@angular/router';
+import { catchError, filter, of, switchMap } from 'rxjs';
 import { Movie } from '../../../../core/models/movie';
 import { Tmdb } from '../../../../core/services/tmdb';
+import { restoreScrollPositionWhenReady } from '../../../../shared/utils/scroll-restoration';
+
+/** TMDB retorna 20 results per page — match com o contador do skeleton placeholder. */
+const RESULTS_PER_PAGE = 20;
 
 @Component({
   selector: 'app-search',
@@ -15,6 +20,10 @@ export class Search implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly tmdb = inject(Tmdb);
+  private readonly viewportScroller = inject(ViewportScroller);
+  private pendingScrollPosition: [number, number] | null = null;
+
+  readonly skeletonPlaceholders = Array.from({ length: RESULTS_PER_PAGE });
 
   readonly loading = signal(true);
   readonly error = signal(false);
@@ -22,6 +31,14 @@ export class Search implements OnInit {
   readonly query = signal('');
   readonly page = signal(1);
   readonly totalPages = signal(0);
+
+  constructor() {
+    this.router.events
+      .pipe(filter((event): event is Scroll => event instanceof Scroll))
+      .subscribe((event) => {
+        this.pendingScrollPosition = event.position;
+      });
+  }
 
   ngOnInit(): void {
     this.route.queryParamMap
@@ -55,6 +72,9 @@ export class Search implements OnInit {
         if (response) {
           this.movies.set(response.results);
           this.totalPages.set(response.total_pages);
+        }
+        if (this.pendingScrollPosition) {
+          restoreScrollPositionWhenReady(this.pendingScrollPosition, this.viewportScroller);
         }
       });
   }

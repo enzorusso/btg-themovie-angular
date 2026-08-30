@@ -44,6 +44,8 @@ export class Tmdb {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.tmdbBaseUrl;
 
+  // Endpoins específicos do TMDB
+
   getPopularMovies(page = 1): Observable<PaginatedResponse<Movie>> {
     return this.http.get<PaginatedResponse<Movie>>(`${this.baseUrl}/movie/popular`, {
       params: new HttpParams().set('page', page).set('language', 'pt-BR'),
@@ -110,6 +112,18 @@ export class Tmdb {
         ),
       ),
     }).pipe(map(({ byTitle, byPerson }) => mergeUnique(byTitle, byPerson)));
+  }
+
+  // Endpoint personalizado por gênero
+  getMoviesByGenre(genreId: number): Observable<PaginatedResponse<Movie>> {
+    return this.http.get<PaginatedResponse<Movie>>(`${this.baseUrl}/discover/movie`, {
+      params: {
+        language: 'pt-BR',
+        page: 1,
+        with_genres: genreId,
+        sort_by: 'popularity.desc',
+      },
+    });
   }
 
   private resolvePerson(name: string): Observable<Person | null> {

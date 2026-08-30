@@ -3,15 +3,19 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  inject,
   Input,
   OnChanges,
+  OnDestroy,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
+import { CarouselScrollMemory } from '../../../../core/services/carousel-scroll-memory';
 import { Movie } from '../../../../core/models/movie';
 
 const ITEM_WIDTH = 160;
 const ITEM_GAP = 16;
+
 @Component({
   selector: 'app-movies-carousel',
   standalone: false,
@@ -19,13 +23,25 @@ const ITEM_GAP = 16;
   styleUrl: './movies-carousel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MoviesCarousel implements OnChanges, AfterViewInit {
+export class MoviesCarousel implements OnChanges, AfterViewInit, OnDestroy {
   @Input() movies: Movie[] = [];
+  /** Identifies this carousel for scroll-position memory (e.g. the section title). */
+  @Input() id = '';
 
   @ViewChild('carousel')
   carousel!: ElementRef<HTMLDivElement>;
 
+  private readonly scrollMemory = inject(CarouselScrollMemory);
+
   private readonly scrollAmount = 500;
+
+  /**
+   * Tracked continuously from the (scroll) event rather than read from the
+   * DOM at destroy time — by the time ngOnDestroy runs, Angular may have
+   * already cleared the @for'd items, which collapses scrollWidth and makes
+   * the browser clamp scrollLeft back to 0.
+   */
+  private lastKnownScrollLeft = 0;
 
   get loopedMovies(): Movie[] {
     return [...this.movies, ...this.movies, ...this.movies];
@@ -44,6 +60,12 @@ export class MoviesCarousel implements OnChanges, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.centerScroll();
+  }
+
+  ngOnDestroy(): void {
+    if (this.id) {
+      this.scrollMemory.save(this.id, this.lastKnownScrollLeft);
+    }
   }
 
   scrollLeft(): void {
@@ -73,6 +95,8 @@ export class MoviesCarousel implements OnChanges, AfterViewInit {
     } else if (carouselElement.scrollLeft > width * 2.5) {
       this.setScrollLeftInstantly(carouselElement.scrollLeft - width);
     }
+
+    this.lastKnownScrollLeft = carouselElement.scrollLeft;
   }
 
   private centerScroll(): void {
@@ -80,7 +104,8 @@ export class MoviesCarousel implements OnChanges, AfterViewInit {
       return;
     }
 
-    this.setScrollLeftInstantly(this.copyWidth);
+    const remembered = this.id ? this.scrollMemory.get(this.id) : undefined;
+    this.setScrollLeftInstantly(remembered ?? this.copyWidth);
   }
 
   private setScrollLeftInstantly(value: number): void {
@@ -89,5 +114,6 @@ export class MoviesCarousel implements OnChanges, AfterViewInit {
     carouselElement.style.scrollBehavior = 'auto';
     carouselElement.scrollLeft = value;
     carouselElement.style.scrollBehavior = previousScrollBehavior;
+    this.lastKnownScrollLeft = value;
   }
 }

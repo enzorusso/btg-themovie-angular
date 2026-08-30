@@ -86,6 +86,24 @@ describe('Tmdb', () => {
     req.flush({ page: 1, results: [], total_pages: 1, total_results: 0 });
   });
 
+  it('fetches movies by genre, sorted by popularity, from /discover/movie', () => {
+    const mockResponse: PaginatedResponse<Movie> = {
+      page: 1,
+      results: [movie(1)],
+      total_pages: 1,
+      total_results: 1,
+    };
+
+    service.getMoviesByGenre(28).subscribe((response) => {
+      expect(response).toEqual(mockResponse);
+    });
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.tmdbBaseUrl}/discover/movie`);
+    expect(req.request.params.get('with_genres')).toBe('28');
+    expect(req.request.params.get('sort_by')).toBe('popularity.desc');
+    req.flush(mockResponse);
+  });
+
   describe('search', () => {
     it('returns an empty page without any HTTP call for a blank query', () => {
       service.search('   ').subscribe((response) => {

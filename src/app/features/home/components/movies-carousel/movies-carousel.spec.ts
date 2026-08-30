@@ -132,4 +132,64 @@ describe('MoviesCarousel', () => {
 
     expect(carouselElement.scrollLeft).toBe(width * 1.5);
   });
+
+  describe('scroll position memory', () => {
+    it('remembers the scroll position across destroy and recreate, for the same id', () => {
+      const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
+      const width = copyWidthFor(movies.length);
+
+      component.id = 'populares';
+      component.movies = movies;
+      fixture.detectChanges();
+      component.carousel.nativeElement.scrollLeft = width * 1.7;
+      component.onScroll(); // simulates the native scroll event that tracks the position
+
+      fixture.destroy();
+
+      const fixture2 = TestBed.createComponent(MoviesCarousel);
+      const component2 = fixture2.componentInstance;
+      component2.id = 'populares';
+      component2.movies = movies;
+      fixture2.detectChanges();
+
+      expect(component2.carousel.nativeElement.scrollLeft).toBe(width * 1.7);
+    });
+
+    it('keeps remembered positions independent per id', () => {
+      const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
+      const width = copyWidthFor(movies.length);
+
+      component.id = 'populares';
+      component.movies = movies;
+      fixture.detectChanges();
+      component.carousel.nativeElement.scrollLeft = width * 1.2;
+      fixture.destroy();
+
+      const fixture2 = TestBed.createComponent(MoviesCarousel);
+      const component2 = fixture2.componentInstance;
+      component2.id = 'acao';
+      component2.movies = movies;
+      fixture2.detectChanges();
+
+      // no memory saved for "acao" yet, so it just centers as usual
+      expect(component2.carousel.nativeElement.scrollLeft).toBe(width);
+    });
+
+    it('centers as usual when no id is provided (nothing to remember by)', () => {
+      const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
+      const width = copyWidthFor(movies.length);
+
+      component.movies = movies;
+      fixture.detectChanges();
+      component.carousel.nativeElement.scrollLeft = width * 1.8;
+      fixture.destroy();
+
+      const fixture2 = TestBed.createComponent(MoviesCarousel);
+      const component2 = fixture2.componentInstance;
+      component2.movies = movies;
+      fixture2.detectChanges();
+
+      expect(component2.carousel.nativeElement.scrollLeft).toBe(width);
+    });
+  });
 });

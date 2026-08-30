@@ -4,19 +4,21 @@
       <app-skeleton class="h-64 w-full rounded-xl md:h-96" />
     </section>
 
-    <section>
-      <app-skeleton class="mb-4 h-7 w-40 rounded" />
+    @for (section of sections; track section.title) {
+      <section class="mb-8">
+        <app-skeleton class="mb-4 h-7 w-40 rounded" />
 
-      <div class="flex items-start gap-4">
-        @for (i of [1, 2, 3, 4, 5]; track i) {
-          <div class="flex w-40 flex-shrink-0 flex-col gap-2">
-            <app-skeleton class="aspect-[2/3] w-full rounded-lg" />
-            <app-skeleton class="h-4 w-full rounded" />
-            <app-skeleton class="h-3 w-12 rounded" />
-          </div>
-        }
-      </div>
-    </section>
+        <div class="flex items-start gap-4">
+          @for (i of [1, 2, 3, 4, 5]; track i) {
+            <div class="flex w-40 flex-shrink-0 flex-col gap-2">
+              <app-skeleton class="aspect-[2/3] w-full rounded-lg" />
+              <app-skeleton class="h-4 w-full rounded" />
+              <app-skeleton class="h-3 w-12 rounded" />
+            </div>
+          }
+        </div>
+      </section>
+    }
   </div>
 } @else if (error()) {
   <div class="flex flex-col items-center gap-4 py-16">
@@ -34,7 +36,7 @@
         {{ section.title }}
       </h2>
 
-      <app-movies-carousel [movies]="section.movies()" />
+      <app-movies-carousel [id]="section.title" [movies]="section.movies()" />
     </section>
   }
 }

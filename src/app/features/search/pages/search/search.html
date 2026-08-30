@@ -9,7 +9,7 @@
       data-testid="search-skeleton"
       class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
     >
-      @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track i) {
+      @for (placeholder of skeletonPlaceholders; track $index) {
         <div class="flex flex-col gap-2">
           <app-skeleton class="aspect-[2/3] w-full rounded-lg" />
           <app-skeleton class="h-4 w-full rounded" />
