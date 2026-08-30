@@ -1,4 +1,3 @@
-import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -88,7 +87,7 @@ describe('MovieDetails', () => {
     expect(compiled.querySelector('[data-testid="movie-details-skeleton"]')).toBeNull();
   });
 
-  it('renders an error message and a back button when a request fails', () => {
+  it('renders an error message when a request fails', () => {
     vi.spyOn(tmdb, 'getMovieDetails').mockReturnValue(throwError(() => new Error('not found')));
     vi.spyOn(tmdb, 'getMovieCredits').mockReturnValue(of(credits));
 
@@ -96,19 +95,6 @@ describe('MovieDetails', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Não foi possível carregar os detalhes deste filme.');
-    expect(compiled.querySelector('button[aria-label="Voltar"]')).not.toBeNull();
-  });
-
-  it('navigates back through browser history when the back button is clicked', () => {
-    vi.spyOn(tmdb, 'getMovieDetails').mockReturnValue(of(movie));
-    vi.spyOn(tmdb, 'getMovieCredits').mockReturnValue(of(credits));
-    fixture.detectChanges();
-
-    const backSpy = vi.spyOn(TestBed.inject(Location), 'back');
-    const compiled = fixture.nativeElement as HTMLElement;
-    compiled.querySelector<HTMLButtonElement>('button[aria-label="Voltar"]')!.click();
-
-    expect(backSpy).toHaveBeenCalled();
   });
 
   it('shows a skeleton matching the final layout while the requests are in flight', () => {

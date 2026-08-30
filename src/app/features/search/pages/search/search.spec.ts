@@ -62,15 +62,6 @@ describe('Search', () => {
     expect(component).toBeTruthy();
   });
 
-  it('renders a back link to the home page', async () => {
-    await setup();
-    fixture.detectChanges();
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    const link = compiled.querySelector('a[aria-label="Voltar"]');
-    expect(link?.getAttribute('href')).toBe('/');
-  });
-
   it('shows a prompt when there is no "title" query param yet', async () => {
     await setup();
     fixture.detectChanges();

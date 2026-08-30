@@ -1,4 +1,3 @@
-import { Location } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -16,7 +15,6 @@ import { Tmdb } from '../../../../core/services/tmdb';
 export class MovieDetails implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly tmdb = inject(Tmdb);
-  private readonly location = inject(Location);
 
   readonly loading = signal(true);
   readonly error = signal(false);
@@ -25,10 +23,6 @@ export class MovieDetails implements OnInit {
   readonly director = signal<string | null>(null);
   readonly genres = signal<string[] | null>([]);
   readonly releaseDate = signal<string | null>(null);
-
-  goBack(): void {
-    this.location.back();
-  }
 
   ngOnInit(): void {
     const movieId = Number(this.route.snapshot.paramMap.get('id'));

@@ -1,40 +1,72 @@
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { provideRouter, Router, Routes } from '@angular/router';
 import { App } from './app';
 
+@Component({ template: '', standalone: true })
+class DummyComponent {}
+
+const testRoutes: Routes = [
+  { path: '', component: DummyComponent },
+  { path: 'search', component: DummyComponent },
+  { path: 'movie/:id', component: DummyComponent },
+];
+
 describe('App', () => {
-  let queryParamMap$: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+  let fixture: ComponentFixture<App>;
+  let component: App;
+  let router: Router;
 
-  async function setup(params: Record<string, string> = {}) {
-    queryParamMap$ = new BehaviorSubject(convertToParamMap(params));
-
+  beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [
-        provideRouter([]),
-        { provide: ActivatedRoute, useValue: { queryParamMap: queryParamMap$.asObservable() } },
-      ],
+      providers: [provideRouter(testRoutes)],
     }).compileComponents();
-  }
 
-  it('should create the app', async () => {
-    await setup();
-    const fixture = TestBed.createComponent(App);
-    expect(fixture.componentInstance).toBeTruthy();
+    fixture = TestBed.createComponent(App);
+    component = fixture.componentInstance;
+    router = TestBed.inject(Router);
   });
 
-  it('feeds the search bar with the current "title" query param', async () => {
-    await setup({ title: 'matrix' });
-    const fixture: ComponentFixture<App> = TestBed.createComponent(App);
-
-    expect(fixture.componentInstance.searchQuery()).toBe('matrix');
+  it('should create the app', () => {
+    expect(component).toBeTruthy();
   });
 
-  it('leaves the search bar empty when there are no query params, e.g. on the home page', async () => {
-    await setup();
-    const fixture: ComponentFixture<App> = TestBed.createComponent(App);
+  it('starts with an empty search query', () => {
+    expect(component.searchQuery()).toBe('');
+  });
 
-    expect(fixture.componentInstance.searchQuery()).toBe('');
+  it('feeds the search bar with the "title" query param while on the search page', async () => {
+    await router.navigateByUrl('/search?title=matrix');
+
+    expect(component.searchQuery()).toBe('matrix');
+  });
+
+  it('clears the search query when navigating to the home page', async () => {
+    await router.navigateByUrl('/search?title=matrix');
+    expect(component.searchQuery()).toBe('matrix');
+
+    await router.navigateByUrl('/');
+
+    expect(component.searchQuery()).toBe('');
+  });
+
+  it('keeps the current search query when navigating to a movie details page', async () => {
+    await router.navigateByUrl('/search?title=matrix');
+    expect(component.searchQuery()).toBe('matrix');
+
+    await router.navigateByUrl('/movie/550');
+
+    expect(component.searchQuery()).toBe('matrix');
+  });
+
+  it('links the "Catálogo" logo to the home page', () => {
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const logo = compiled.querySelector('a');
+
+    expect(logo?.getAttribute('href')).toBe('/');
+    expect(logo?.textContent).toContain('Catálogo');
   });
 });
