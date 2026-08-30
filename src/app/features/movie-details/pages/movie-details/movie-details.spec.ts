@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -95,6 +96,28 @@ describe('MovieDetails', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Não foi possível carregar os detalhes deste filme.');
+  });
+
+  it('renders a back button', () => {
+    vi.spyOn(tmdb, 'getMovieDetails').mockReturnValue(of(movie));
+    vi.spyOn(tmdb, 'getMovieCredits').mockReturnValue(of(credits));
+
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('button[aria-label="Voltar"]')).not.toBeNull();
+  });
+
+  it('navigates back through browser history when the back button is clicked', () => {
+    vi.spyOn(tmdb, 'getMovieDetails').mockReturnValue(of(movie));
+    vi.spyOn(tmdb, 'getMovieCredits').mockReturnValue(of(credits));
+    const location = TestBed.inject(Location);
+    const backSpy = vi.spyOn(location, 'back').mockImplementation(() => {});
+
+    fixture.detectChanges();
+    component.goBack();
+
+    expect(backSpy).toHaveBeenCalled();
   });
 
   it('shows a skeleton matching the final layout while the requests are in flight', () => {

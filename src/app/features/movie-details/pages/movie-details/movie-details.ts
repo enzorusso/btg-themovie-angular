@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -15,6 +16,7 @@ import { Tmdb } from '../../../../core/services/tmdb';
 export class MovieDetails implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly tmdb = inject(Tmdb);
+  private readonly location = inject(Location);
 
   readonly loading = signal(true);
   readonly error = signal(false);
@@ -44,5 +46,9 @@ export class MovieDetails implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 }

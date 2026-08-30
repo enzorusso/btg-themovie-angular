@@ -32,4 +32,14 @@ describe('CarouselScrollMemory', () => {
     expect(service.get('populares')).toBe(320);
     expect(service.get('acao')).toBe(640);
   });
+
+  it('forgets every saved position after clear()', () => {
+    service.save('populares', 320);
+    service.save('acao', 640);
+
+    service.clear();
+
+    expect(service.get('populares')).toBeUndefined();
+    expect(service.get('acao')).toBeUndefined();
+  });
 });

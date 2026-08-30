@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router, Routes } from '@angular/router';
 import { App } from './app';
+import { CarouselScrollMemory } from './core/services/carousel-scroll-memory';
 
 @Component({ template: '', standalone: true })
 class DummyComponent {}
@@ -68,5 +69,14 @@ describe('App', () => {
 
     expect(logo?.getAttribute('href')).toBe('/');
     expect(logo?.textContent).toContain('Catálogo');
+  });
+
+  it('clears the remembered carousel scroll positions when the logo is clicked', () => {
+    const carouselScrollMemory = TestBed.inject(CarouselScrollMemory);
+    const clearSpy = vi.spyOn(carouselScrollMemory, 'clear');
+
+    component.onLogoClick();
+
+    expect(clearSpy).toHaveBeenCalled();
   });
 });

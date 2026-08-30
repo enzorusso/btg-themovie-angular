@@ -16,4 +16,8 @@ export class CarouselScrollMemory {
   get(id: string): number | undefined {
     return this.positions.get(id);
   }
+
+  clear(): void {
+    this.positions.clear();
+  }
 }
