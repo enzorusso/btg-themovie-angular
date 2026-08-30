@@ -10,11 +10,12 @@ Este projeto foi desenvolvido como parte de um teste técnico, com o objetivo de
 
 ### Funcionalidades
 
-- ✅ **Listagem de Filmes Populares** — exibe capa, título e avaliação média dos filmes mais populares do momento.
-- ✅ **Filmes a serem Lançados** — banner na tela inicial com os próximos lançamentos.
+- ✅ **Listagem de Filmes por Seção** — Populares, Melhores Avaliados e seções por categoria (Ação, Comédia), cada uma num carrossel horizontal com loop infinito e a posição de scroll lembrada ao voltar pra tela.
+- ✅ **Filmes a serem Lançados** — banner na tela inicial com os próximos lançamentos, autoplay que pausa ao passar o mouse.
 - ✅ **Busca de Filmes** — um único campo de busca que retorna, ao mesmo tempo, filmes por título, ator e diretor, com listagem e paginação dos resultados.
 - ✅ **Detalhes do Filme** — título, sinopse, gêneros, data de lançamento, avaliação média, elenco e pôster em alta resolução.
-- ✅ **Navegação** — Angular Router entre listagem, busca e detalhes, com "voltar" respeitando o histórico real de navegação.
+- ✅ **Navegação** — Angular Router entre listagem, busca e detalhes, com "voltar" respeitando o histórico real de navegação e restaurando a posição de scroll da página (mesmo com conteúdo assíncrono).
+- ✅ **Tema escuro** — fundo `#2e3349` fixo, com feedback visual (borda branca) ao passar o mouse sobre pôsteres e o banner.
 - ✅ **Componentização** — responsabilidades separadas em componentes reutilizáveis (card de filme, carrossel, busca, paginação, skeleton, etc).
 
 ### Diferenciais implementados
@@ -26,7 +27,7 @@ Este projeto foi desenvolvido como parte de um teste técnico, com o objetivo de
 - [x] Lazy Loading e modularização
 - [x] Interface responsiva
 - [ ] Localização (Inglês e Português)
-- [ ] Filmes por categoria — chegou a ser implementado e depois removido em favor da busca combinada; ver [Decisões Técnicas](#-decisões-técnicas)
+- [x] Filmes por categoria — não como filtro de busca (removido de lá em favor da busca combinada; ver [Decisões Técnicas](#-decisões-técnicas)), mas como seções da home (Ação, Comédia) via `/discover/movie?with_genres=`
 
 ---
 
@@ -130,13 +131,14 @@ src/
 │   │   │   └── tmdb-api-key-interceptor.ts   # injeta a api_key em toda chamada à TMDB
 │   │   ├── models/                  # Movie, MovieDetails, CastMember, Person, etc.
 │   │   └── services/
-│   │       └── tmdb.ts              # único ponto de acesso à API da TMDB
+│   │       ├── tmdb.ts                      # único ponto de acesso à API da TMDB
+│   │       └── carousel-scroll-memory.ts    # lembra o scroll horizontal de cada carrossel entre navegações
 │   │
 │   ├── features/                    # uma pasta por tela/fluxo, lazy-loaded via app.routes.ts
 │   │   ├── home/
 │   │   │   ├── components/
-│   │   │   │   ├── banner-carousel/          # banner de lançamentos, com autoplay
-│   │   │   │   └── popular-movies-carousel/  # fileira de populares, scroll horizontal infinito (loop)
+│   │   │   │   ├── banner-carousel/   # banner de lançamentos, autoplay que pausa no hover
+│   │   │   │   └── movies-carousel/   # carrossel genérico com loop infinito, usado por várias seções
 │   │   │   ├── pages/home/
 │   │   │   ├── home-module.ts
 │   │   │   └── home-routing-module.ts
@@ -152,7 +154,7 @@ src/
 │   │       ├── search-module.ts
 │   │       └── search-routing-module.ts
 │   │
-│   ├── shared/                      # componentes/pipes reutilizados por mais de uma feature
+│   ├── shared/                      # componentes/pipes/utils reutilizados por mais de uma feature
 │   │   ├── components/
 │   │   │   ├── movie-card/          # card de filme (poster + título + nota)
 │   │   │   ├── pagination/          # "‹ Página X de Y ›", usado na busca
@@ -161,6 +163,8 @@ src/
 │   │   ├── material/                # módulo agregando os componentes do Angular Material usados
 │   │   ├── pipes/
 │   │   │   └── tmdb-image-pipe.ts   # monta a URL de imagem a partir do path da TMDB
+│   │   ├── utils/
+│   │   │   └── scroll-restoration.ts  # restaura o scroll da página só depois que o conteúdo assíncrono carrega
 │   │   └── shared-module.ts
 │   │
 │   ├── app.html
@@ -177,15 +181,17 @@ Cada feature segue o mesmo padrão: um `*-module.ts` (declarations) + `*-routing
 
 ## 🌐 Endpoints da API utilizados
 
-| Funcionalidade                              | Endpoint TMDB                                  |
-| -------------------------------------------- | ------------------------------------------------- |
-| Filmes populares                             | `GET /movie/popular`                            |
-| Filmes a serem lançados                      | `GET /movie/upcoming`                           |
-| Detalhes do filme                            | `GET /movie/{movie_id}`                         |
-| Elenco e equipe técnica                      | `GET /movie/{movie_id}/credits`                 |
-| Busca por título                             | `GET /search/movie`                             |
-| Busca por pessoa (resolve nome → id)         | `GET /search/person`                            |
-| Filmes por pessoa (ator ou diretor)          | `GET /discover/movie?with_people={person_id}`   |
+| Funcionalidade                              | Endpoint TMDB                                        |
+| -------------------------------------------- | -------------------------------------------------------- |
+| Filmes populares                             | `GET /movie/popular`                                  |
+| Filmes a serem lançados                      | `GET /movie/upcoming`                                 |
+| Melhores avaliados                           | `GET /movie/top_rated`                                |
+| Filmes por categoria (seções da home)        | `GET /discover/movie?with_genres={genre_id}`          |
+| Detalhes do filme                            | `GET /movie/{movie_id}`                               |
+| Elenco e equipe técnica                      | `GET /movie/{movie_id}/credits`                       |
+| Busca por título                             | `GET /search/movie`                                   |
+| Busca por pessoa (resolve nome → id)         | `GET /search/person`                                  |
+| Filmes por pessoa (ator ou diretor)          | `GET /discover/movie?with_people={person_id}`         |
 
 A busca (`Tmdb.search()`) chama `/search/movie` e a dupla `/search/person` → `/discover/movie` em paralelo e mescla os resultados — ver [Decisões Técnicas](#-decisões-técnicas).
 
@@ -205,9 +211,17 @@ Documentação completa: [TMDB API Reference](https://developer.themoviedb.org/r
 
 - **Loading com skeleton "estático", não spinner.** Home, detalhes e busca seguem o mesmo padrão: um `<app-skeleton>` reutilizável ocupa exatamente o espaço do conteúdo final enquanto os dados carregam (via `forkJoin`, então tudo aparece de uma vez), em vez de um spinner pequeno que dá lugar a um layout bem maior de repente. Evita o "pulo" de tela ao terminar de carregar.
 
-- **Estratégia de componentização.** Três camadas: `core` (serviços singleton, interceptors, models — zero UI), `shared` (componentes/pipes de UI reaproveitados por mais de uma feature: `movie-card`, `search-bar`, `skeleton`, `pagination`) e `features/*` (uma pasta por tela, com `pages/` para o componente de rota e `components/` para sub-componentes usados só ali — como `banner-carousel` e `popular-movies-carousel` dentro de `home`, ou `cast-list` dentro de `movie-details`). Regra prática usada: se um componente serve mais de uma feature, vai para `shared`; se é específico de uma tela, fica dentro dela.
+- **Estratégia de componentização.** Três camadas: `core` (serviços singleton, interceptors, models — zero UI), `shared` (componentes/pipes de UI reaproveitados por mais de uma feature: `movie-card`, `search-bar`, `skeleton`, `pagination`) e `features/*` (uma pasta por tela, com `pages/` para o componente de rota e `components/` para sub-componentes usados só ali — como `banner-carousel` e `movies-carousel` dentro de `home`, ou `cast-list` dentro de `movie-details`). Regra prática usada: se um componente serve mais de uma feature, vai para `shared`; se é específico de uma tela, fica dentro dela.
 
-- **Carrossel de populares com loop infinito, sem paginar a API de novo.** A fileira de "Populares" mostra sempre a mesma primeira página de `getPopularMovies()` (não busca mais páginas ao rolar) — o efeito de infinito é só visual: a lista é renderizada triplicada (cópia antes + original + depois) e, ao chegar perto do início/fim de uma cópia, a posição de scroll pula instantaneamente pro trecho equivalente da cópia do meio, sem o usuário perceber. Detalhe não óbvio: a classe `scroll-smooth` (`scroll-behavior: smooth`) faz esse navegador animar até atribuições diretas de `scrollLeft`, não só `scrollTo()`/`scrollBy()` — então esse salto de reposicionamento precisa desligar `scroll-behavior` (`style.scrollBehavior = 'auto'`) por um instante, ou ele fica visivelmente arrastando por vários segundos em vez de ser imperceptível.
+- **`MoviesCarousel` genérico, com loop infinito, sem paginar a API de novo.** Um único componente (não mais específico de "populares") alimenta todas as seções da home — cada uma mostra sempre a mesma primeira página do endpoint correspondente (não busca mais páginas ao rolar). O efeito de infinito é só visual: a lista é renderizada triplicada (cópia antes + original + depois) e, ao chegar perto do início/fim de uma cópia, a posição de scroll pula instantaneamente pro trecho equivalente da cópia do meio, sem o usuário perceber. Dois detalhes não óbvios encontrados no caminho:
+  - A classe `scroll-smooth` (`scroll-behavior: smooth`) faz esse navegador animar até atribuições diretas de `scrollLeft`, não só `scrollTo()`/`scrollBy()` — então esse salto de reposicionamento precisa desligar `scroll-behavior` (`style.scrollBehavior = 'auto'`) por um instante, ou ele fica visivelmente arrastando por vários segundos em vez de ser imperceptível.
+  - Mesmo com isso corrigido, a atribuição de `scrollLeft` no primeiro render nem sempre "cola" de primeira em algumas máquinas/versões de Chrome (o container pode ainda não ter terminado de calcular layout naquele instante) — por isso a centralização inicial confere se o valor realmente foi aplicado e tenta de novo no próximo frame até 20 vezes, em vez de assumir que sempre funciona na primeira tentativa.
+
+- **Cada carrossel lembra sua própria posição de scroll horizontal.** `CarouselScrollMemory` é um serviço singleton em memória (chave = título da seção) — cada `MoviesCarousel` salva seu `scrollLeft` no `ngOnDestroy` e o restaura (em vez de centralizar) no próximo mount com o mesmo id. Detalhe não óbvio: ler `scrollLeft` diretamente dentro de `ngOnDestroy` não é confiável — o Angular parece limpar os itens do `@for` antes do hook rodar, o que encolhe o `scrollWidth` e faz o navegador zerar o `scrollLeft` sozinho. A posição salva vem de um valor rastreado continuamente pelo evento `(scroll)`, não de uma leitura do DOM no momento da destruição.
+
+- **Scroll da página (não só dos carrosséis) também é restaurado ao voltar.** O Angular Router já tem restauração de scroll nativa (`withInMemoryScrolling`), mas ela dispara assim que a navegação termina — antes dos dados assíncronos da Home/Busca carregarem e a página atingir a altura final, o que fazia a restauração "ficar curta". A solução: capturar o evento `Scroll` do router (que só carrega uma posição quando é navegação de voltar/avançar) e reaplicar manualmente com `viewportScroller.scrollToPosition()` só depois que os dados chegam e a página já é alta o suficiente pra conter aquela posição — função reaproveitável em `shared/utils/scroll-restoration.ts`, usada tanto na Home quanto na Busca.
+
+- **Tema escuro via `theme-type: dark` do Material, não recolorindo cada componente na mão.** Trocar `theme-type` no `mat.theme()` já ajustou automaticamente botões, ícones, spinner e bordas de input pros tokens corretos — evitando sobrescrever cor por cor manualmente onde o Material já resolve isso sozinho. Por cima disso, o fundo da página é fixado no hex exato do design (`#2e3349`) via CSS puro, já que o tom escuro derivado automaticamente pelo Material não bateria com esse valor específico. O feedback de hover (borda branca) usa `ring` do Tailwind (baseado em `box-shadow`, não `border`) para não deslocar layout nenhum — com o cuidado de aplicar o anel sempre no elemento mais externo não afetado por `overflow-hidden`/`overflow-x-auto` de algum ancestral, já que ambos cortam `box-shadow` que "vaza" pra fora da própria caixa.
 
 - **Módulos por feature com lazy loading, componente raiz standalone.** O scaffold original do projeto usa `NgModule` por feature (mantido, com `loadChildren` lazy), mas o componente raiz (`App`) é standalone — escolha pragmática de manter o padrão herdado do `ng new` em vez de migrar tudo para standalone no meio do desenvolvimento.
 
