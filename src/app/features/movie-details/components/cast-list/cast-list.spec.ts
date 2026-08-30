@@ -54,7 +54,7 @@ describe('CastList', () => {
   it('renders a fallback initials avatar for a cast member without a profile_path, independently of the one with a photo', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const images = compiled.querySelectorAll('img');
-    const fallbackAvatars = compiled.querySelectorAll('div.bg-gray-200');
+    const fallbackAvatars = compiled.querySelectorAll('div.bg-gray-700');
 
     // exactly one member has a photo, one doesn't — each renders its own branch independently
     expect(images.length).toBe(1);

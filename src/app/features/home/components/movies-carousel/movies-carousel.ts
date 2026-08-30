@@ -108,12 +108,17 @@ export class MoviesCarousel implements OnChanges, AfterViewInit, OnDestroy {
     this.setScrollLeftInstantly(remembered ?? this.copyWidth);
   }
 
-  private setScrollLeftInstantly(value: number): void {
+  private setScrollLeftInstantly(value: number, attempt = 0): void {
     const carouselElement = this.carousel.nativeElement;
     const previousScrollBehavior = carouselElement.style.scrollBehavior;
     carouselElement.style.scrollBehavior = 'auto';
     carouselElement.scrollLeft = value;
     carouselElement.style.scrollBehavior = previousScrollBehavior;
     this.lastKnownScrollLeft = value;
+
+    const maxAttempts = 20;
+    if (carouselElement.scrollLeft !== value && attempt < maxAttempts) {
+      requestAnimationFrame(() => this.setScrollLeftInstantly(value, attempt + 1));
+    }
   }
 }

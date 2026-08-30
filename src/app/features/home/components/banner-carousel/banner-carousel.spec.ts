@@ -115,6 +115,38 @@ describe('BannerCarousel', () => {
     expect(link?.getAttribute('href')).toBe('/movie/1');
   });
 
+  it('pauses autoplay while the mouse is over the banner', () => {
+    vi.useFakeTimers();
+    component.movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
+    component.ngOnChanges({ movies: new SimpleChange(undefined, component.movies, true) });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector('.relative')!.dispatchEvent(new Event('mouseenter'));
+
+    vi.advanceTimersByTime(10000); // well past the 5s interval
+
+    expect(component.currentIndex()).toBe(0);
+  });
+
+  it('resumes autoplay once the mouse leaves the banner', () => {
+    vi.useFakeTimers();
+    component.movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
+    component.ngOnChanges({ movies: new SimpleChange(undefined, component.movies, true) });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const banner = compiled.querySelector('.relative')!;
+    banner.dispatchEvent(new Event('mouseenter'));
+    vi.advanceTimersByTime(10000);
+    expect(component.currentIndex()).toBe(0);
+
+    banner.dispatchEvent(new Event('mouseleave'));
+    vi.advanceTimersByTime(5000);
+
+    expect(component.currentIndex()).toBe(1);
+  });
+
   it('renders a fallback icon when the current movie has no backdrop_path', () => {
     component.movies = [makeMovie(1, 'First', null)];
     component.ngOnChanges({ movies: new SimpleChange(undefined, component.movies, true) });

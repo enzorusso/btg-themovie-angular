@@ -133,6 +133,50 @@ describe('MoviesCarousel', () => {
     expect(carouselElement.scrollLeft).toBe(width * 1.5);
   });
 
+  describe('scrollLeft assignment resilience', () => {
+    it('retries on the next frame if the browser does not apply the assignment immediately', () => {
+      component.movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
+      fixture.detectChanges();
+
+      const el = component.carousel.nativeElement;
+      const width = copyWidthFor(component.movies.length);
+
+      const rafCallbacks: FrameRequestCallback[] = [];
+      vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+        rafCallbacks.push(cb);
+        return rafCallbacks.length;
+      });
+
+      // Simulate a browser that ignores the first write (stays at 0) but
+      // accepts the second one — same shape as the real-world quirk this
+      // guards against.
+      let internalValue = el.scrollLeft;
+      let writeCount = 0;
+      Object.defineProperty(el, 'scrollLeft', {
+        configurable: true,
+        get: () => internalValue,
+        set: (v: number) => {
+          writeCount++;
+          internalValue = writeCount === 1 ? 0 : v;
+        },
+      });
+
+      const movies = [makeMovie(3, 'C'), makeMovie(4, 'D')];
+      component.movies = movies;
+      component.ngOnChanges({ movies: new SimpleChange(null, movies, false) });
+
+      expect(el.scrollLeft).toBe(0); // first attempt didn't stick
+      expect(rafCallbacks.length).toBe(1); // a retry was scheduled
+
+      rafCallbacks.shift()!(0); // run the retry
+
+      expect(el.scrollLeft).toBe(width); // now it stuck
+      expect(rafCallbacks.length).toBe(0); // no further retries needed
+
+      vi.unstubAllGlobals();
+    });
+  });
+
   describe('scroll position memory', () => {
     it('remembers the scroll position across destroy and recreate, for the same id', () => {
       const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];

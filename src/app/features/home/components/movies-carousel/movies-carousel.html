@@ -2,7 +2,7 @@
   <button
     mat-icon-button
     disableRipple
-    class="mt-0 !h-60 !w-10 !shrink-0 !rounded-lg !bg-blue-100/80 !text-blue-700 !border !border-blue-200/50 !shadow-sm !backdrop-blur-[12px] transition"
+    class="mt-0 !h-60 !w-10 !shrink-0 !rounded-lg !bg-white/10 !text-white/80 !border !border-white/10 !shadow-sm !backdrop-blur-[12px] transition"
     (click)="scrollLeft()"
     aria-label="Filmes anteriores"
   >
@@ -11,7 +11,7 @@
 
   <div
     #carousel
-    class="flex min-w-0 gap-4 overflow-x-auto scroll-smooth scrollbar-hide"
+    class="flex min-w-0 gap-4 overflow-x-auto scroll-smooth scrollbar-hide py-1"
     (scroll)="onScroll()"
   >
     @for (movie of loopedMovies; track $index) {
@@ -24,7 +24,7 @@
   <button
     mat-icon-button
     disableRipple
-    class="mt-0 !h-60 !w-10 !shrink-0 !rounded-lg !bg-blue-100/80 !text-blue-700 !border !border-blue-200/50 !shadow-sm !backdrop-blur-[12px] transition"
+    class="mt-0 !h-60 !w-10 !shrink-0 !rounded-lg !bg-white/10 !text-white/80 !border !border-white/10 !shadow-sm !backdrop-blur-[12px] transition"
     (click)="scrollRight()"
     aria-label="Próximos filmes"
   >

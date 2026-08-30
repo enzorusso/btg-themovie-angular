@@ -1,6 +1,10 @@
 @if (movies.length > 0) {
   @if (movies[currentIndex()]; as current) {
-    <div class="relative w-full overflow-hidden rounded-xl">
+    <div
+      class="relative w-full overflow-hidden rounded-xl ring-2 ring-transparent transition-shadow hover:ring-white"
+      (mouseenter)="pauseAutoplay()"
+      (mouseleave)="resumeAutoplay()"
+    >
       <a [routerLink]="['/movie', current.id]" class="block">
         @if (current.backdrop_path | tmdbImage: 'w1280'; as backdropUrl) {
           <img
@@ -9,7 +13,7 @@
             class="h-64 w-full object-cover object-top md:h-96"
           />
         } @else {
-          <div class="flex h-64 w-full items-center justify-center bg-gray-200 md:h-96">
+          <div class="flex h-64 w-full items-center justify-center bg-gray-700 text-gray-400 md:h-96">
             <mat-icon>movie</mat-icon>
           </div>
         }

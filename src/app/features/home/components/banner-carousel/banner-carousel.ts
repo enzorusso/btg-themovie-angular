@@ -41,6 +41,14 @@ export class BannerCarousel implements OnChanges, OnDestroy {
     this.restartAutoplay();
   }
 
+  pauseAutoplay(): void {
+    this.stopAutoplay();
+  }
+
+  resumeAutoplay(): void {
+    this.restartAutoplay();
+  }
+
   private restartAutoplay(): void {
     this.stopAutoplay();
 
