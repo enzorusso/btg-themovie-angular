@@ -10,17 +10,17 @@
               [src]="photoUrl"
               [alt]="member.name"
               loading="lazy"
-              class="h-16 w-16 rounded-full object-cover"
+              class="h-20 w-20 rounded-full object-cover"
             />
           } @else {
-            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-700">
-              <span class="text-base font-bold">
+            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gray-700">
+              <span class="text-2xl font-bold">
                 {{ getInitials(member.name) }}
               </span>
             </div>
           }
 
-          <p class="w-full text-[11px] leading-tight text-gray-300">
+          <p class="w-full text-xs leading-tight text-gray-300">
             {{ member.name }}
           </p>
         </div>
