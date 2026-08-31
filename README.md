@@ -22,7 +22,7 @@ Este projeto foi desenvolvido como parte de um teste técnico, com o objetivo de
 
 - [x] Paginação na listagem de filmes
 - [x] Testes unitários
-- [ ] Deploy (Vercel / Netlify / GitHub Pages)
+- [x] Deploy Vercel
 - [x] State Management (Signals)
 - [x] Lazy Loading e modularização
 - [x] Interface responsiva
@@ -120,6 +120,8 @@ ng test
 Executa os testes unitários através do [Vitest](https://vitest.dev), usando o builder `@angular/build:unit-test`.
 
 ---
+
+## ▶️ A aplicação está disponível no Vercel [neste link](https://btg-themovie-angular.vercel.app/).
 
 ## 📁 Estrutura do Projeto
 
@@ -236,6 +238,9 @@ Documentação completa: [TMDB API Reference](https://developer.themoviedb.org/r
 - **Paginação da busca: uma requisição nova a cada página, sem cache.** A TMDB pagina por número de página (`page=N`, não offset/limit nem cursor pagination) — dá pra pedir qualquer página diretamente, sem passar pelas anteriores. Isso é uma característica da API em si e trocar de página muda o `page` na URL, o que refaz a busca inteira do zero: `queryParamMap` emite de novo → `switchMap` cancela a busca anterior (se ainda estiver em curso) e chama `Tmdb.search()` de novo — nada do que já foi buscado fica guardado, nem localmente nem em algum cache HTTP. Isso significa até **3 chamadas por troca de página** (`/search/movie` + `/search/person` + `/discover/movie`), sendo que a de `/search/person` é redundante entre páginas da mesma busca — o texto buscado não muda, só a página, então o id da pessoa resolvida seria sempre o mesmo.
 
   **Trade-off escolhido: não cachear.** Daria pra memorizar o id da pessoa buscada (em um `Map` dentro do `Tmdb`) e cortar essa chamada redundante, mas decidi não fazer isso: o ganho é só 1 chamada a menos — a mais barata das três — e o custo é o `Tmdb` deixar de ser um cliente HTTP stateless (hoje cada método é só um `http.get` direto, sem nenhum estado) pra carregar um cache mutável, que traz perguntas novas: quando invalidar, crescimento sem limite conforme o usuário busca termos diferentes na sessão, e "Pessoa não encontrada" ficando cacheado como `null` pra sempre. Pra uma app desse tamanho, não compensa a complexidade extra por um request barato a menos.
+
+  **Environment**
+- por mais que não seja ideal e nem seguro, precisei deixar o .env commitado com a key da API, a fim de facilitar/agilizar os testes e o deploy no Vercel.
 
 ---
 
