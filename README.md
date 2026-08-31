@@ -121,7 +121,9 @@ Executa os testes unitários através do [Vitest](https://vitest.dev), usando o 
 
 ---
 
-## ▶️ A aplicação está disponível no Vercel [neste link](https://btg-themovie-angular.vercel.app/).
+## ▶️ Deploy
+
+A aplicação está disponível no Vercel [neste link](https://btg-themovie-angular.vercel.app/).
 
 ## 📁 Estrutura do Projeto
 
