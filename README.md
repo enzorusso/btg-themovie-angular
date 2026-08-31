@@ -42,10 +42,10 @@ Este projeto foi desenvolvido como parte de um teste técnico, com o objetivo de
 
 ### Bibliotecas externas
 
-| Biblioteca                                        | Por que foi usada                                                                                 | Benefícios trazidos                                                                          |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Biblioteca                                              | Por que foi usada                                                                                                            | Benefícios trazidos                                                                                                  |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | [Angular Material](https://material.angular.dev/) + CDK | Componentes de UI prontos e acessíveis (inputs, botões, ícones, form-fields), já integrados ao theming Material 3 do Angular | Agilidade no desenvolvimento sem reinventar componentes básicos, com acessibilidade e consistência visual de fábrica |
-| [Tailwind CSS](https://tailwindcss.com/)             | Utilitários de layout, espaçamento e responsividade direto no template, sem escrever SCSS repetitivo | Iteração rápida de UI (grids responsivos na home e na busca, carrosséis, skeletons) com pouco código |
+| [Tailwind CSS](https://tailwindcss.com/)                | Utilitários de layout, espaçamento e responsividade direto no template, sem escrever SCSS repetitivo                         | Iteração rápida de UI (grids responsivos na home e na busca, carrosséis, skeletons) com pouco código                 |
 
 ---
 
@@ -181,17 +181,17 @@ Cada feature segue o mesmo padrão: um `*-module.ts` (declarations) + `*-routing
 
 ## 🌐 Endpoints da API utilizados
 
-| Funcionalidade                              | Endpoint TMDB                                        |
-| -------------------------------------------- | -------------------------------------------------------- |
-| Filmes populares                             | `GET /movie/popular`                                  |
-| Filmes a serem lançados                      | `GET /movie/upcoming`                                 |
-| Melhores avaliados                           | `GET /movie/top_rated`                                |
-| Filmes por categoria (seções da home)        | `GET /discover/movie?with_genres={genre_id}`          |
-| Detalhes do filme                            | `GET /movie/{movie_id}`                               |
-| Elenco e equipe técnica                      | `GET /movie/{movie_id}/credits`                       |
-| Busca por título                             | `GET /search/movie`                                   |
-| Busca por pessoa (resolve nome → id)         | `GET /search/person`                                  |
-| Filmes por pessoa (ator ou diretor)          | `GET /discover/movie?with_people={person_id}`         |
+| Funcionalidade                        | Endpoint TMDB                                 |
+| ------------------------------------- | --------------------------------------------- |
+| Filmes populares                      | `GET /movie/popular`                          |
+| Filmes a serem lançados               | `GET /movie/upcoming`                         |
+| Melhores avaliados                    | `GET /movie/top_rated`                        |
+| Filmes por categoria (seções da home) | `GET /discover/movie?with_genres={genre_id}`  |
+| Detalhes do filme                     | `GET /movie/{movie_id}`                       |
+| Elenco e equipe técnica               | `GET /movie/{movie_id}/credits`               |
+| Busca por título                      | `GET /search/movie`                           |
+| Busca por pessoa (resolve nome → id)  | `GET /search/person`                          |
+| Filmes por pessoa (ator ou diretor)   | `GET /discover/movie?with_people={person_id}` |
 
 A busca (`Tmdb.search()`) chama `/search/movie` e a dupla `/search/person` → `/discover/movie` em paralelo e mescla os resultados — ver [Decisões Técnicas](#-decisões-técnicas).
 
@@ -220,6 +220,8 @@ Documentação completa: [TMDB API Reference](https://developer.themoviedb.org/r
 - **Estratégia de componentização.** Três camadas: `core` (serviços singleton, interceptors, models — zero UI), `shared` (componentes/pipes de UI reaproveitados por mais de uma feature: `movie-card`, `search-bar`, `skeleton`, `pagination`) e `features/*` (uma pasta por tela, com `pages/` para o componente de rota e `components/` para sub-componentes usados só ali — como `banner-carousel` e `movies-carousel` dentro de `home`, ou `cast-list` dentro de `movie-details`). Regra prática usada: se um componente serve mais de uma feature, vai para `shared`; se é específico de uma tela, fica dentro dela.
 
 - **`MoviesCarousel` genérico, com pontas reais (sem loop), sem paginar a API de novo.** Um único componente (não mais específico de "populares") alimenta todas as seções da home — cada uma mostra sempre a mesma primeira página do endpoint correspondente (não busca mais páginas ao rolar). A lista é renderizada uma única vez (`@for (movie of movies; track movie.id)`, sem cópias) e o scroll tem início e fim reais: os botões de seta usam dois signals (`canScrollLeft`/`canScrollRight`), recalculados a cada evento `(scroll)` comparando `scrollLeft`/`scrollWidth`/`clientWidth`, e ficam desabilitados (`[disabled]`) quando não há mais pra onde rolar naquela direção — em vez do loop infinito anterior, que escondia as pontas saltando pra uma cópia do meio.
+
+- **`BannerCarousel` pré-busca o pôster da tela de detalhes.** O banner de lançamentos renderiza o `backdrop_path` (`w1280`) de cada filme; `movie-details` renderiza o `poster_path` (`w780`) — são imagens diferentes. Isso significa que clicar num filme do banner sempre baixava um pôster que o navegador nunca tinha buscado, travando visivelmente a primeira navegação até aquela imagem específica chegar (percebido em produção no Vercel; localmente passa despercebido com a rede mais rápida). `prefetchCurrentPoster()` dispara um `new Image().src = ...` com a URL do pôster do slide atualmente em tela sempre que ele muda — no load inicial, ao trocar de slide pelos pontinhos (`goTo()`) e a cada tick do autoplay — assim o navegador já tem esse pôster em cache antes do clique acontecer. Escolhido deliberadamente pré-buscar só o slide atual (não os ~20 filmes do banner inteiro de uma vez): é o único que está realmente "no ar" pra ser clicado a qualquer momento, e o autoplay de 5s já dá tempo de sobra pra imagem carregar.
 
 - **Cada carrossel lembra sua própria posição de scroll horizontal.** `CarouselScrollMemory` é um serviço singleton em memória (chave = título da seção) — cada `MoviesCarousel` salva seu `scrollLeft` no `ngOnDestroy` e o restaura (em vez de centralizar) no próximo mount com o mesmo id. Detalhe não óbvio: ler `scrollLeft` diretamente dentro de `ngOnDestroy` não é confiável — o Angular parece limpar os itens do `@for` antes do hook rodar, o que encolhe o `scrollWidth` e faz o navegador zerar o `scrollLeft` sozinho. A posição salva vem de um valor rastreado continuamente pelo evento `(scroll)`, não de uma leitura do DOM no momento da destruição.
 

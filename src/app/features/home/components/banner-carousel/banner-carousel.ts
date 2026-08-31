@@ -7,9 +7,13 @@ import {
   signal,
   SimpleChanges,
 } from '@angular/core';
+import { environment } from '../../../../../environments/environment';
 import { Movie } from '../../../../core/models/movie';
 
 const AUTOPLAY_INTERVAL_MS = 5000;
+
+// Mesmo tamanho usado pelo pôster em movie-details.html
+const DETAILS_POSTER_SIZE = 'w780';
 
 @Component({
   selector: 'app-banner-carousel',
@@ -29,6 +33,7 @@ export class BannerCarousel implements OnChanges, OnDestroy {
     if (changes['movies']) {
       this.currentIndex.set(0);
       this.restartAutoplay();
+      this.prefetchCurrentPoster();
     }
   }
 
@@ -39,6 +44,7 @@ export class BannerCarousel implements OnChanges, OnDestroy {
   goTo(index: number): void {
     this.currentIndex.set(index);
     this.restartAutoplay();
+    this.prefetchCurrentPoster();
   }
 
   pauseAutoplay(): void {
@@ -58,6 +64,7 @@ export class BannerCarousel implements OnChanges, OnDestroy {
 
     this.intervalId = setInterval(() => {
       this.currentIndex.set((this.currentIndex() + 1) % this.movies.length);
+      this.prefetchCurrentPoster();
     }, AUTOPLAY_INTERVAL_MS);
   }
 
@@ -65,6 +72,13 @@ export class BannerCarousel implements OnChanges, OnDestroy {
     if (this.intervalId !== undefined) {
       clearInterval(this.intervalId);
       this.intervalId = undefined;
+    }
+  }
+
+  private prefetchCurrentPoster(): void {
+    const posterPath = this.movies[this.currentIndex()]?.poster_path;
+    if (posterPath) {
+      new Image().src = `${environment.tmdbImageBaseUrl}${DETAILS_POSTER_SIZE}${posterPath}`;
     }
   }
 }

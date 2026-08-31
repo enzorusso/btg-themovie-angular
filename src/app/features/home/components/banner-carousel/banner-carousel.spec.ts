@@ -9,17 +9,32 @@ function makeMovie(
   id: number,
   title: string,
   backdropPath: string | null = '/backdrop.jpg',
+  posterPath: string | null = null,
 ): Movie {
   return {
     id,
     title,
     overview: '',
-    poster_path: null,
+    poster_path: posterPath,
     backdrop_path: backdropPath,
     release_date: '2024-01-01',
     vote_average: 7,
     genre_ids: [],
   };
+}
+
+/** Stubs the `Image` global so prefetching can be asserted without a real network request. */
+function stubImagePrefetch(): string[] {
+  const requestedUrls: string[] = [];
+  vi.stubGlobal(
+    'Image',
+    class {
+      set src(value: string) {
+        requestedUrls.push(value);
+      }
+    },
+  );
+  return requestedUrls;
 }
 
 describe('BannerCarousel', () => {
@@ -38,6 +53,7 @@ describe('BannerCarousel', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('should create', () => {
@@ -156,5 +172,52 @@ describe('BannerCarousel', () => {
 
     expect(compiled.querySelector('img')).toBeNull();
     expect(compiled.querySelector('mat-icon')?.textContent?.trim()).toBe('movie');
+  });
+
+  describe('poster prefetching', () => {
+    it('prefetches the details-page poster of the current slide once the movies arrive', () => {
+      const requestedUrls = stubImagePrefetch();
+
+      component.movies = [makeMovie(1, 'First', '/backdrop.jpg', '/poster1.jpg')];
+      component.ngOnChanges({ movies: new SimpleChange(undefined, component.movies, true) });
+
+      expect(requestedUrls).toEqual(['https://image.tmdb.org/t/p/w780/poster1.jpg']);
+    });
+
+    it('does not attempt to prefetch when the current movie has no poster_path', () => {
+      const requestedUrls = stubImagePrefetch();
+
+      component.movies = [makeMovie(1, 'First', '/backdrop.jpg', null)];
+      component.ngOnChanges({ movies: new SimpleChange(undefined, component.movies, true) });
+
+      expect(requestedUrls).toEqual([]);
+    });
+
+    it('prefetches the newly selected slide poster when navigating via goTo', () => {
+      component.movies = [
+        makeMovie(1, 'First', '/backdrop.jpg', '/poster1.jpg'),
+        makeMovie(2, 'Second', '/backdrop.jpg', '/poster2.jpg'),
+      ];
+      component.ngOnChanges({ movies: new SimpleChange(undefined, component.movies, true) });
+
+      const requestedUrls = stubImagePrefetch();
+      component.goTo(1);
+
+      expect(requestedUrls).toEqual(['https://image.tmdb.org/t/p/w780/poster2.jpg']);
+    });
+
+    it('prefetches the next slide poster on every autoplay tick', () => {
+      vi.useFakeTimers();
+      component.movies = [
+        makeMovie(1, 'First', '/backdrop.jpg', '/poster1.jpg'),
+        makeMovie(2, 'Second', '/backdrop.jpg', '/poster2.jpg'),
+      ];
+      component.ngOnChanges({ movies: new SimpleChange(undefined, component.movies, true) });
+
+      const requestedUrls = stubImagePrefetch();
+      vi.advanceTimersByTime(5000);
+
+      expect(requestedUrls).toEqual(['https://image.tmdb.org/t/p/w780/poster2.jpg']);
+    });
   });
 });
