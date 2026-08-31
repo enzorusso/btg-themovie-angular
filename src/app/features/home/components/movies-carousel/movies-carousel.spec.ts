@@ -18,9 +18,13 @@ function makeMovie(id: number, title: string): Movie {
   };
 }
 
-// Matches the ITEM_WIDTH/ITEM_GAP constants (and the w-40/gap-4 classes) in the component.
-function copyWidthFor(movieCount: number): number {
-  return movieCount * 160 + Math.max(movieCount - 1, 0) * 16;
+/** jsdom doesn't lay out content, so scrollWidth/clientWidth default to 0 — stub them per test. */
+function setLayout(
+  el: HTMLElement,
+  { scrollWidth, clientWidth }: { scrollWidth: number; clientWidth: number },
+): void {
+  Object.defineProperty(el, 'scrollWidth', { value: scrollWidth, configurable: true });
+  Object.defineProperty(el, 'clientWidth', { value: clientWidth, configurable: true });
 }
 
 describe('MoviesCarousel', () => {
@@ -41,12 +45,12 @@ describe('MoviesCarousel', () => {
     expect(component).toBeTruthy();
   });
 
-  it('renders the movie list tripled, so scrolling never hits a hard edge', () => {
+  it('renders each movie exactly once', () => {
     component.movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelectorAll('app-movie-card').length).toBe(6);
+    expect(compiled.querySelectorAll('app-movie-card').length).toBe(2);
     expect(compiled.textContent).toContain('First');
     expect(compiled.textContent).toContain('Second');
   });
@@ -65,128 +69,83 @@ describe('MoviesCarousel', () => {
     expect(scrollBy).toHaveBeenCalledWith({ left: -500, behavior: 'smooth' });
   });
 
-  it('centers the scroll position on the middle copy once rendered', () => {
-    const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second'), makeMovie(3, 'Third')];
-    component.movies = movies;
-    fixture.detectChanges();
-
-    expect(component.carousel.nativeElement.scrollLeft).toBe(copyWidthFor(movies.length));
-  });
-
-  it('re-centers when the movie list changes', () => {
-    component.movies = [makeMovie(1, 'First')];
-    fixture.detectChanges();
-
-    const movies = [makeMovie(2, 'A'), makeMovie(3, 'B'), makeMovie(4, 'C'), makeMovie(5, 'D')];
-    component.movies = movies;
-    component.ngOnChanges({ movies: new SimpleChange(null, movies, false) });
-
-    expect(component.carousel.nativeElement.scrollLeft).toBe(copyWidthFor(movies.length));
-  });
-
-  it('does not animate the initial centering (bypasses scroll-behavior: smooth)', () => {
-    component.movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
-    fixture.detectChanges();
-
-    expect(component.carousel.nativeElement.style.scrollBehavior).toBe('');
-  });
-
-  it('jumps forward into the middle copy when scroll drifts near the start', () => {
-    const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
-    component.movies = movies;
-    fixture.detectChanges();
-
-    const carouselElement = component.carousel.nativeElement;
-    const width = copyWidthFor(movies.length);
-    carouselElement.scrollLeft = width * 0.1; // well under half a copy
-
-    component.onScroll();
-
-    expect(carouselElement.scrollLeft).toBe(width * 1.1);
-  });
-
-  it('jumps backward into the middle copy when scroll drifts near the end', () => {
-    const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
-    component.movies = movies;
-    fixture.detectChanges();
-
-    const carouselElement = component.carousel.nativeElement;
-    const width = copyWidthFor(movies.length);
-    carouselElement.scrollLeft = width * 2.9; // past 2.5 copies in
-
-    component.onScroll();
-
-    expect(carouselElement.scrollLeft).toBe(width * 1.9);
-  });
-
-  it('does nothing on scroll while comfortably within the middle copy', () => {
-    const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
-    component.movies = movies;
-    fixture.detectChanges();
-
-    const carouselElement = component.carousel.nativeElement;
-    const width = copyWidthFor(movies.length);
-    carouselElement.scrollLeft = width * 1.5;
-
-    component.onScroll();
-
-    expect(carouselElement.scrollLeft).toBe(width * 1.5);
-  });
-
-  describe('scrollLeft assignment resilience', () => {
-    it('retries on the next frame if the browser does not apply the assignment immediately', () => {
+  describe('scroll button state', () => {
+    it('disables the left button and enables the right one at the start of an overflowing list', () => {
       component.movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
       fixture.detectChanges();
 
       const el = component.carousel.nativeElement;
-      const width = copyWidthFor(component.movies.length);
+      setLayout(el, { scrollWidth: 1000, clientWidth: 400 });
+      el.scrollLeft = 0;
+      component.onScroll();
 
-      const rafCallbacks: FrameRequestCallback[] = [];
-      vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-        rafCallbacks.push(cb);
-        return rafCallbacks.length;
-      });
+      expect(component.canScrollLeft()).toBe(false);
+      expect(component.canScrollRight()).toBe(true);
+    });
 
-      // Simulate a browser that ignores the first write (stays at 0) but
-      // accepts the second one — same shape as the real-world quirk this
-      // guards against.
-      let internalValue = el.scrollLeft;
-      let writeCount = 0;
-      Object.defineProperty(el, 'scrollLeft', {
-        configurable: true,
-        get: () => internalValue,
-        set: (v: number) => {
-          writeCount++;
-          internalValue = writeCount === 1 ? 0 : v;
-        },
-      });
+    it('enables the left button and disables the right one at the end of the list', () => {
+      component.movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
+      fixture.detectChanges();
 
-      const movies = [makeMovie(3, 'C'), makeMovie(4, 'D')];
+      const el = component.carousel.nativeElement;
+      setLayout(el, { scrollWidth: 1000, clientWidth: 400 });
+      el.scrollLeft = 600; // scrollLeft + clientWidth === scrollWidth
+      component.onScroll();
+
+      expect(component.canScrollLeft()).toBe(true);
+      expect(component.canScrollRight()).toBe(false);
+    });
+
+    it('disables both buttons when every item already fits without overflow', () => {
+      component.movies = [makeMovie(1, 'First')];
+      fixture.detectChanges();
+
+      const el = component.carousel.nativeElement;
+      setLayout(el, { scrollWidth: 200, clientWidth: 400 });
+      el.scrollLeft = 0;
+      component.onScroll();
+
+      expect(component.canScrollLeft()).toBe(false);
+      expect(component.canScrollRight()).toBe(false);
+    });
+
+    it('reflects the disabled state on the actual buttons in the DOM', () => {
+      component.movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
+      fixture.detectChanges();
+
+      const el = component.carousel.nativeElement;
+      setLayout(el, { scrollWidth: 1000, clientWidth: 400 });
+      el.scrollLeft = 0;
+      component.onScroll();
+      fixture.detectChanges();
+
+      const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll('button');
+      expect(buttons[0].disabled).toBe(true);
+      expect(buttons[1].disabled).toBe(false);
+    });
+
+    it('recomputes button state once the movie list arrives asynchronously', () => {
+      fixture.detectChanges(); // view initializes before movies arrive
+
+      const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
       component.movies = movies;
+      const el = component.carousel.nativeElement;
+      setLayout(el, { scrollWidth: 1000, clientWidth: 400 });
       component.ngOnChanges({ movies: new SimpleChange(null, movies, false) });
 
-      expect(el.scrollLeft).toBe(0); // first attempt didn't stick
-      expect(rafCallbacks.length).toBe(1); // a retry was scheduled
-
-      rafCallbacks.shift()!(0); // run the retry
-
-      expect(el.scrollLeft).toBe(width); // now it stuck
-      expect(rafCallbacks.length).toBe(0); // no further retries needed
-
-      vi.unstubAllGlobals();
+      expect(component.canScrollRight()).toBe(true);
     });
   });
 
   describe('scroll position memory', () => {
-    it('remembers the scroll position across destroy and recreate, for the same id', () => {
+    it('restores the remembered scroll position on mount, without animating', () => {
       const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
-      const width = copyWidthFor(movies.length);
 
       component.id = 'populares';
       component.movies = movies;
       fixture.detectChanges();
-      component.carousel.nativeElement.scrollLeft = width * 1.7;
-      component.onScroll(); // simulates the native scroll event that tracks the position
+      component.carousel.nativeElement.scrollLeft = 320;
+      component.onScroll(); // tracks lastKnownScrollLeft, mirroring the real (scroll) event
 
       fixture.destroy();
 
@@ -196,17 +155,18 @@ describe('MoviesCarousel', () => {
       component2.movies = movies;
       fixture2.detectChanges();
 
-      expect(component2.carousel.nativeElement.scrollLeft).toBe(width * 1.7);
+      expect(component2.carousel.nativeElement.scrollLeft).toBe(320);
+      expect(component2.carousel.nativeElement.style.scrollBehavior).toBe('');
     });
 
     it('keeps remembered positions independent per id', () => {
       const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
-      const width = copyWidthFor(movies.length);
 
       component.id = 'populares';
       component.movies = movies;
       fixture.detectChanges();
-      component.carousel.nativeElement.scrollLeft = width * 1.2;
+      component.carousel.nativeElement.scrollLeft = 200;
+      component.onScroll();
       fixture.destroy();
 
       const fixture2 = TestBed.createComponent(MoviesCarousel);
@@ -215,17 +175,17 @@ describe('MoviesCarousel', () => {
       component2.movies = movies;
       fixture2.detectChanges();
 
-      // no memory saved for "acao" yet, so it just centers as usual
-      expect(component2.carousel.nativeElement.scrollLeft).toBe(width);
+      // no memory saved for "acao" yet, so it just stays at the start
+      expect(component2.carousel.nativeElement.scrollLeft).toBe(0);
     });
 
-    it('centers as usual when no id is provided (nothing to remember by)', () => {
+    it('starts at the beginning when no id is provided (nothing to remember by)', () => {
       const movies = [makeMovie(1, 'First'), makeMovie(2, 'Second')];
-      const width = copyWidthFor(movies.length);
 
       component.movies = movies;
       fixture.detectChanges();
-      component.carousel.nativeElement.scrollLeft = width * 1.8;
+      component.carousel.nativeElement.scrollLeft = 200;
+      component.onScroll();
       fixture.destroy();
 
       const fixture2 = TestBed.createComponent(MoviesCarousel);
@@ -233,7 +193,7 @@ describe('MoviesCarousel', () => {
       component2.movies = movies;
       fixture2.detectChanges();
 
-      expect(component2.carousel.nativeElement.scrollLeft).toBe(width);
+      expect(component2.carousel.nativeElement.scrollLeft).toBe(0);
     });
   });
 });

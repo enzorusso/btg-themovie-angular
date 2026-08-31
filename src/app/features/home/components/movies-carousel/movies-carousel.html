@@ -2,7 +2,8 @@
   <button
     mat-icon-button
     disableRipple
-    class="mt-0 !h-60 !w-10 !shrink-0 !rounded-lg !bg-white/10 !text-white/80 !border !border-white/10 !shadow-sm !backdrop-blur-[12px] transition"
+    class="mt-0 !h-60 !w-10 !shrink-0 !rounded-lg !bg-white/10 !text-white/80 !border !border-white/10 !shadow-sm !backdrop-blur-[12px] transition disabled:!opacity-30"
+    [disabled]="!canScrollLeft()"
     (click)="scrollLeft()"
     aria-label="Filmes anteriores"
   >
@@ -11,10 +12,10 @@
 
   <div
     #carousel
-    class="flex min-w-0 gap-4 overflow-x-auto scroll-smooth scrollbar-hide py-1"
+    class="flex min-w-0 gap-4 overflow-x-auto scroll-smooth scrollbar-hide px-3 py-3"
     (scroll)="onScroll()"
   >
-    @for (movie of loopedMovies; track $index) {
+    @for (movie of movies; track movie.id) {
       <div class="w-40 flex-shrink-0">
         <app-movie-card [movie]="movie" />
       </div>
@@ -24,7 +25,8 @@
   <button
     mat-icon-button
     disableRipple
-    class="mt-0 !h-60 !w-10 !shrink-0 !rounded-lg !bg-white/10 !text-white/80 !border !border-white/10 !shadow-sm !backdrop-blur-[12px] transition"
+    class="mt-0 !h-60 !w-10 !shrink-0 !rounded-lg !bg-white/10 !text-white/80 !border !border-white/10 !shadow-sm !backdrop-blur-[12px] transition disabled:!opacity-30"
+    [disabled]="!canScrollRight()"
     (click)="scrollRight()"
     aria-label="Próximos filmes"
   >

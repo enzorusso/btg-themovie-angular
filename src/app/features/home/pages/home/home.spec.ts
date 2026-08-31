@@ -66,13 +66,12 @@ describe('Home', () => {
     expect(compiled.querySelectorAll('app-movies-carousel').length).toBe(
       component.sections.length,
     );
-    // each carousel loops, rendering its list three times back-to-back
     const totalMovies =
       component.popularMovies().length +
       component.topRatedMovies().length +
       component.actionMovies().length +
       component.comedyMovies().length;
-    expect(compiled.querySelectorAll('app-movie-card').length).toBe(totalMovies * 3);
+    expect(compiled.querySelectorAll('app-movie-card').length).toBe(totalMovies);
     expect(compiled.textContent).toContain('Populares');
     expect(compiled.textContent).toContain('Melhores Avaliados');
     expect(compiled.textContent).toContain('Ação');

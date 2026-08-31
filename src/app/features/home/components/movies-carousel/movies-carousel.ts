@@ -8,13 +8,11 @@ import {
   OnChanges,
   OnDestroy,
   SimpleChanges,
+  signal,
   ViewChild,
 } from '@angular/core';
 import { CarouselScrollMemory } from '../../../../core/services/carousel-scroll-memory';
 import { Movie } from '../../../../core/models/movie';
-
-const ITEM_WIDTH = 160;
-const ITEM_GAP = 16;
 
 @Component({
   selector: 'app-movies-carousel',
@@ -25,7 +23,6 @@ const ITEM_GAP = 16;
 })
 export class MoviesCarousel implements OnChanges, AfterViewInit, OnDestroy {
   @Input() movies: Movie[] = [];
-  /** Identifies this carousel for scroll-position memory (e.g. the section title). */
   @Input() id = '';
 
   @ViewChild('carousel')
@@ -35,31 +32,19 @@ export class MoviesCarousel implements OnChanges, AfterViewInit, OnDestroy {
 
   private readonly scrollAmount = 500;
 
-  /**
-   * Tracked continuously from the (scroll) event rather than read from the
-   * DOM at destroy time — by the time ngOnDestroy runs, Angular may have
-   * already cleared the @for'd items, which collapses scrollWidth and makes
-   * the browser clamp scrollLeft back to 0.
-   */
+  readonly canScrollLeft = signal(false);
+  readonly canScrollRight = signal(false);
+
   private lastKnownScrollLeft = 0;
-
-  get loopedMovies(): Movie[] {
-    return [...this.movies, ...this.movies, ...this.movies];
-  }
-
-  private get copyWidth(): number {
-    const count = this.movies.length;
-    return count * ITEM_WIDTH + Math.max(count - 1, 0) * ITEM_GAP;
-  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['movies'] && this.carousel) {
-      this.centerScroll();
+      this.restoreScrollPosition();
     }
   }
 
   ngAfterViewInit(): void {
-    this.centerScroll();
+    this.restoreScrollPosition();
   }
 
   ngOnDestroy(): void {
@@ -83,42 +68,37 @@ export class MoviesCarousel implements OnChanges, AfterViewInit, OnDestroy {
   }
 
   onScroll(): void {
-    if (this.movies.length === 0) {
-      return;
-    }
-
-    const carouselElement = this.carousel.nativeElement;
-    const width = this.copyWidth;
-
-    if (carouselElement.scrollLeft < width * 0.5) {
-      this.setScrollLeftInstantly(carouselElement.scrollLeft + width);
-    } else if (carouselElement.scrollLeft > width * 2.5) {
-      this.setScrollLeftInstantly(carouselElement.scrollLeft - width);
-    }
-
-    this.lastKnownScrollLeft = carouselElement.scrollLeft;
+    this.lastKnownScrollLeft = this.carousel.nativeElement.scrollLeft;
+    this.updateScrollButtonsState();
   }
 
-  private centerScroll(): void {
+  private restoreScrollPosition(): void {
     if (this.movies.length === 0) {
       return;
     }
 
     const remembered = this.id ? this.scrollMemory.get(this.id) : undefined;
-    this.setScrollLeftInstantly(remembered ?? this.copyWidth);
+    if (remembered) {
+      this.setScrollLeftInstantly(remembered);
+    }
+
+    this.updateScrollButtonsState();
   }
 
-  private setScrollLeftInstantly(value: number, attempt = 0): void {
+  private setScrollLeftInstantly(value: number): void {
     const carouselElement = this.carousel.nativeElement;
     const previousScrollBehavior = carouselElement.style.scrollBehavior;
     carouselElement.style.scrollBehavior = 'auto';
     carouselElement.scrollLeft = value;
     carouselElement.style.scrollBehavior = previousScrollBehavior;
     this.lastKnownScrollLeft = value;
+  }
 
-    const maxAttempts = 20;
-    if (carouselElement.scrollLeft !== value && attempt < maxAttempts) {
-      requestAnimationFrame(() => this.setScrollLeftInstantly(value, attempt + 1));
-    }
+  private updateScrollButtonsState(): void {
+    const carouselElement = this.carousel.nativeElement;
+    this.canScrollLeft.set(carouselElement.scrollLeft > 0);
+    this.canScrollRight.set(
+      carouselElement.scrollLeft + carouselElement.clientWidth < carouselElement.scrollWidth - 1,
+    );
   }
 }
